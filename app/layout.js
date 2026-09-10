@@ -1,5 +1,6 @@
-import { Geist, Geist_Mono } from "next/font/google";
+﻿import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import Navigation from "@/components/Navigation";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,13 +14,15 @@ const geistMono = Geist_Mono({
 
 export const metadata = {
   title: "HoopSpot",
-  description: "Krepšinio veiklų rezervavimo platforma",
+  description: "KrepÅinio veiklÅ³ rezervavimo platforma",
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="lt" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body>{children}</body>
+      <body><Navigation />{children}</body>
     </html>
   );
 }
+
+
