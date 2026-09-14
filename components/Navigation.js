@@ -35,6 +35,7 @@ export default function Navigation() {
         {!loading && user ? (
           <>
             <Link href="/my-reservations">Mano rezervacijos</Link>
+            <Link href="/my-activities">Mano veiklos</Link>
             <span className="user-status">Prisijungęs: {user.user_metadata?.display_name || user.email}</span>
             <button type="button" className="nav-button" onClick={signOut}>Atsijungti</button>
           </>
