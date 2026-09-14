@@ -2,7 +2,12 @@
 
 ## Krepšinio veiklų rezervavimo platforma
 
+<<<<<<< HEAD
 „HoopSpot“ – rezervuok vietą aikštelėje.
+=======
+HoopSpot – krepšinis vienoje vietoje.
+„HoopSpot“ – internetinė platforma, skirta krepšinio treniruotėms ir kitiems krepšinio užsiėmimams kurti bei rezervuoti. Vartotojas gali sukurti veiklą, peržiūrėti kitų vartotojų veiklas, rezervuoti laisvą vietą ir iki veiklos pradžios atšaukti savo rezervaciją.
+>>>>>>> ada390a2ce028d0813a3b38b7c60215aaeb08abf
 
 Pirmoji versija skirta tik krepšinio veikloms. Tas pats vartotojas gali atlikti ir organizatoriaus, ir dalyvio veiksmus.
 
