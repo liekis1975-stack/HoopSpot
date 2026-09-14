@@ -11,3 +11,5 @@
 .card p, .form p { line-height: 1.6; }
 .card ul { padding-left: 1.5rem; }
 .error { color: #d53c3c; }
+.cancelButton { padding: .8rem 1rem; font: inherit; cursor: pointer; background: var(--background); color: var(--foreground); border: 1px solid #d53c3c; border-radius: .3rem; }
+.cancelButton:disabled { opacity: .6; cursor: wait; }
