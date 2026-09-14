@@ -34,6 +34,7 @@ export default function Navigation() {
       <div className="site-nav-links">
         {!loading && user ? (
           <>
+            <Link href="/my-activities">Mano veiklos</Link>
             <span className="user-status">Prisijungęs: {user.user_metadata?.display_name || user.email}</span>
             <button type="button" className="nav-button" onClick={signOut}>Atsijungti</button>
           </>
