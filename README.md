@@ -1,4 +1,4 @@
-# HoopSpot
+# HoopSpot v1.1
 
 ## Krepšinio veiklų rezervavimo platforma
 
@@ -7,6 +7,10 @@
 „HoopSpot“ – internetinė platforma, skirta krepšinio treniruotėms ir kitiems krepšinio užsiėmimams kurti bei rezervuoti. Vartotojas gali sukurti veiklą, peržiūrėti kitų vartotojų veiklas, rezervuoti laisvą vietą ir iki veiklos pradžios atšaukti savo rezervaciją.
 
 Pirmoji versija skirta tik krepšinio veikloms. Tas pats vartotojas gali atlikti ir organizatoriaus, ir dalyvio veiksmus.
+
+## Vieša versija
+
+[Atidaryti HoopSpot Vercel platformoje](https://hoop-spot-eosin.vercel.app)
 
 ## Komandos atsakomybės
 
@@ -58,3 +62,43 @@ Pakeitimai nuo pirmosios viešos versijos:
 ```bash
 git clone https://github.com/liekis1975-stack/HoopSpot.git
 cd HoopSpot
+```
+
+2. Įdiekite priklausomybes (reikalingi Node.js ir npm):
+
+```bash
+npm install
+```
+
+3. Projekto šakniniame kataloge sukurkite `.env.local` pagal `.env.example`:
+
+```bash
+cp .env.example .env.local
+```
+
+Faile naudojami šie aplinkos kintamieji (pavyzdyje reikšmės paliktos tuščios):
+
+```dotenv
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+```
+
+Į `.env.local` patys įrašykite bendro Supabase projekto reikšmes. Šį failą Git ignoruoja.
+
+4. Paleiskite kūrimo serverį:
+
+```bash
+npm run dev
+```
+
+5. Naršyklėje atidarykite [http://localhost:3000](http://localhost:3000).
+
+## Projekto dalys
+
+- **Organizatoriaus dalis:** `app/activities/new/` (kūrimas), `app/activities/[id]/edit/` (redagavimas), `app/my-activities/` („Mano veiklos“), `components/activity-form/` (formos ir atšaukimas), `lib/organizer/` (serverio veiksmai, sesija ir validacija).
+- **Dalyvio dalis:** `app/page.js` (viešas veiklų sąrašas), `app/my-reservations/` („Mano rezervacijos“), `components/ParticipantActivities.js` (veiklų peržiūra ir rezervacijų veiksmai). Registracija ir prisijungimas yra `app/register/` ir `app/login/`.
+
+## Dokumentacija
+
+- [Projekto įgyvendinimo planas – PLANAS.md](PLANAS.md)
+- [Testavimo aprašymas ir rezultatai – TESTAI.md](TESTAI.md)
