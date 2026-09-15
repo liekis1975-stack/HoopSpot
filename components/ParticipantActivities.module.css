@@ -4,6 +4,7 @@
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 1.25rem; }
 .card { display: flex; flex-direction: column; gap: 1.25rem; padding: 1.5rem; border: 1px solid #888; border-radius: .75rem; overflow-wrap: anywhere; }
 .card h2 { font-size: 1.35rem; }
+.cancelled { display: grid; gap: .5rem; padding: 1rem; border: 1px solid #8b2015; border-radius: .4rem; background: #fff0ee; color: #8b2015; line-height: 1.6; }
 .details { display: grid; gap: .8rem; }
 .details div { display: grid; gap: .2rem; }
 .details dt { font-size: .85rem; opacity: .75; }

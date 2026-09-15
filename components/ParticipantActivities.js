@@ -101,6 +101,9 @@ export default function ParticipantActivities({ reservationsOnly = false }) {
 
   async function act(id) {
     if (locked.current) return;
+    const item = items.find((item) => item.id === id);
+    const activity = reservationsOnly ? item?.activity : item;
+    if (activity?.status === "cancelled") return;
     locked.current = true;
     setPending(id);
     setNotice(null);
@@ -132,7 +135,7 @@ export default function ParticipantActivities({ reservationsOnly = false }) {
     <main className={styles.page}>
       <header className={styles.header}>
         <h1>{reservationsOnly ? "Mano rezervacijos" : "Aktyvios veiklos"}</h1>
-        <p>{reservationsOnly ? "Jūsų aktyvios rezervacijos ir veiklų informacija." : "Raskite krepšinio veiklą ir rezervuokite vietą."}</p>
+        <p>{reservationsOnly ? "Jūsų rezervacijos ir veiklų informacija, įskaitant organizatoriaus atšauktas veiklas." : "Raskite krepšinio veiklą ir rezervuokite vietą."}</p>
         <p>Laikas rodomas Lietuvos laiko juostoje.</p>
         {reservationsOnly && <Link className={styles.link} href="/">Peržiūrėti veiklas</Link>}
       </header>
@@ -146,21 +149,25 @@ export default function ParticipantActivities({ reservationsOnly = false }) {
           const busy = pending === item.id;
           if (!activity) return <article className={styles.card} key={item.id}><h2>Veiklos informacija nepasiekiama</h2><p>Nepavyko gauti su rezervacija susijusios veiklos.</p><button className={styles.button} disabled={pending !== null || loading} onClick={() => act(item.id)}>{busy ? "Atšaukiama..." : "Atšaukti rezervaciją"}</button></article>;
           const remaining = activity.capacity - activity.reserved_slots;
+          const cancelled = activity.status === "cancelled";
           return (
             <article className={styles.card} key={item.id}>
               <h2>{activity.title}</h2>
+              {cancelled && <div className={styles.cancelled}>
+                <p><strong>Veikla atšaukta</strong></p>
+                <p>{reservationsOnly ? "Organizatorius atšaukė veiklą. Jūsų rezervacijos įrašas išsaugotas." : "Organizatorius atšaukė veiklą. Rezervuoti negalima."}</p>
+              </div>}
               <dl className={styles.details}>
                 <div><dt>Veiklos tipas</dt><dd>{activity.activity_type}</dd></div>
                 <div><dt>Pradžia</dt><dd><time dateTime={activity.starts_at}>{dateFormat.format(new Date(activity.starts_at))}</time></dd></div>
                 <div><dt>Pabaiga</dt><dd><time dateTime={activity.ends_at}>{dateFormat.format(new Date(activity.ends_at))}</time></dd></div>
                 <div><dt>Vieta</dt><dd>{activity.location}</dd></div>
                 <div><dt>Vietų skaičius</dt><dd>{activity.capacity}</dd></div>
-                <div><dt>Liko vietų</dt><dd>{remaining}</dd></div>
+                {!cancelled && <div><dt>Liko vietų</dt><dd>{remaining}</dd></div>}
               </dl>
-              {activity.status === "cancelled" && <p>Veikla atšaukta.</p>}
-              <button className={styles.button} type="button" disabled={pending !== null || loading || (!reservationsOnly && remaining <= 0)} onClick={() => act(item.id)}>
+              {!cancelled && <button className={styles.button} type="button" disabled={pending !== null || loading || (!reservationsOnly && remaining <= 0)} onClick={() => act(item.id)}>
                 {busy ? (reservationsOnly ? "Atšaukiama..." : "Rezervuojama...") : reservationsOnly ? "Atšaukti rezervaciją" : remaining <= 0 ? "Vietų nėra" : "Rezervuoti"}
-              </button>
+              </button>}
             </article>
           );
         })}
