@@ -11,6 +11,18 @@ HoopSpot – krepšinis vienoje vietoje.
 
 Pirmoji versija skirta tik krepšinio veikloms. Tas pats vartotojas gali atlikti ir organizatoriaus, ir dalyvio veiksmus.
 
+## Versija
+
+**v1.1**
+
+Pakeitimai nuo pirmosios viešos versijos:
+
+- organizatorius gali atšaukti savo sukurtą veiklą jos neištrindamas;
+- dalyvio rezervacijose aiškiai rodoma būsena „Veikla atšaukta“;
+- į atšauktą veiklą nebegalima rezervuoti vietos;
+- patikrinta paskutinės vietos apsauga duomenų bazėje;
+- testavimo rezultatai pateikti faile [TESTAI.md](TESTAI.md).
+
 ## Komandos atsakomybės
 
 ### Karolis – organizatoriaus funkcijos
