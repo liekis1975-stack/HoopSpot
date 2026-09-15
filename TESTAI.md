@@ -1,0 +1,51 @@
+# HoopSpot – 11 užduoties testavimas
+
+## Pildymas ir pasiruošimas
+
+Šis dokumentas parengtas pagal `PLANAS.md`, esamą kodą ir migracijas. Rankiniai bandymai dar neatlikti: faktinis rezultatas ir būsena palikti neužpildyti. Po kiekvieno bandymo įrašykite pastebėtą rezultatą ir pasirinkite tik **„Pavyko“** arba **„Nepavyko“**. Draudžiamo veiksmo atmetimas reiškia „Pavyko“, jeigu duomenys liko nepakeisti.
+
+- Testavo: __________; data: __________; aplikacijos adresas / versija: __________; naršyklės: __________.
+- Naudokite dvi testines paskyras: A – veiklos kūrėjas, B – dalyvis, atskiruose naršyklės profiliuose. Anoniminiam bandymui naudokite neprisijungusį privatų langą.
+- Testinėje Supabase aplinkoje turi būti pritaikytos `001_initial_schema.sql` ir `002_cancel_activity.sql`. Jų pritaikymas šio dokumento rengimo metu netikrintas.
+- Paruoškite atskiras būsimas aktyvias veiklas: su bent 2 vietomis ir su 1 vieta. Prieš bandymą užrašykite veiklos ID, rezervacijos ID ir `reserved_slots`. Skirtingiems bandymams naudokite atskiras veiklas, kad ankstesnis atšaukimas nepakeistų pradinių sąlygų.
+- Teisių bandymams vien paslėpto mygtuko nepakanka: tiesiogines Supabase užklausas vykdykite su atitinkamo testinio vartotojo sesija arba anonimine role. Nenaudokite administratoriaus / `service_role` teisių kaip vartotojo teisių įrodymo. Sesijos žetonų į šį dokumentą nekopijuokite.
+- RPC parametrai: `reserve_activity` ir `cancel_activity` priima `p_activity_id`, o `cancel_reservation` – `p_reservation_id`.
+
+## Rankinių bandymų lentelė
+
+Stulpelyje „Kas buvo daroma“ pateikta vykdymo instrukcija; po bandymo ją patikslinkite, jei atlikti žingsniai skyrėsi. Brūkšnys rezultatų stulpeliuose reiškia neužpildytą vietą, o ne bandymo įvertinimą.
+
+| Nr. | Kas buvo daroma | Laukiamas rezultatas | Faktinis rezultatas | Būsena („Pavyko“ / „Nepavyko“) |
+| --- | --- | --- | --- | --- |
+| 1 | Neprisijungus atidaryti `/` ir spausti „Rezervuoti“ būsimoje veikloje su laisvomis vietomis. Papildomai anonimiškai kviesti `reserve_activity`. | Sąsaja nukreipia į `/login`; tiesioginė RPC užklausa atmetama. Rezervacija nesukuriama, `reserved_slots` nesikeičia. | — | — |
+| 2 | B rezervuoti A veiklą, turinčią bent 2 laisvas vietas; tuo pačiu vartotoju dar kartą bandyti rezervuoti tą pačią veiklą, taip pat kartoti `reserve_activity` užklausą. | Antras bandymas atmetamas dėl jau turimos aktyvios rezervacijos. B turi tik vieną aktyvią rezervaciją; vietų skaičius padidėja tik vieną kartą. | — | — |
+| 3 | A sukuria veiklą. B atidaro `/activities/<A veiklos ID>/edit`, tiesiogiai bando keisti jos `title` / `description` ir kviečia `cancel_activity` su A veiklos ID. | Redagavimo puslapis grąžina 404. Tiesioginis svetimos eilutės keitimas nepakeičia duomenų (gali būti grąžinta 0 pakeistų eilučių). Atšaukimo RPC atmetama. Pavadinimas, aprašymas ir veiklos būsena nesikeičia. | — | — |
+| 4 | B rezervuoja A veiklą. A savo sesija kviečia `cancel_reservation`, perduodamas B rezervacijos ID. | Užklausa atmetama: rezervacija nerasta arba nepriklauso vartotojui. Net veiklos kūrėjas negali šia funkcija atšaukti dalyvio rezervacijos. B rezervacija ir `reserved_slots` nesikeičia. | — | — |
+| 5 | B rezervuoja aktyvią būsimą veiklą, užrašo laisvų vietų skaičių ir iki pradžios paspaudžia „Atšaukti rezervaciją“ puslapyje `/my-reservations`. Atnaujinti viešą sąrašą ir patikrinti DB įrašą. | Laisvų vietų padaugėja 1, `reserved_slots` sumažėja 1. Rezervacijos įrašas išlieka su `status = 'cancelled'` ir užpildytu `cancelled_at`; jis neberodomas aktyvių rezervacijų sąraše. Veikla lieka aktyvi. | — | — |
+| 6 | B užpildo vienintelę vietą būsimoje veikloje. A atnaujina viešą sąrašą ir bando rezervuoti, taip pat tiesiogiai kviečia `reserve_activity`. | Sąsajoje rodoma „Vietų nėra“, mygtukas neveikia. RPC atmeta pilnos veiklos rezervavimą. Naujas įrašas nesukuriamas, `reserved_slots` lieka lygus `capacity`. | — | — |
+| 7 | B palieka atvertą aktyvios veiklos kortelę su „Rezervuoti“, dar neturėdamas jos rezervacijos. A kitame įrenginyje ar naršyklėje veiklą atšaukia. B neperkrautame puslapyje bando rezervuoti; papildomai siunčia `reserve_activity` su atšauktos veiklos ID. Po to atnaujina sąrašą. | Net pasenęs puslapis negali sukurti rezervacijos: DB atmeta užklausą dėl atšauktos veiklos. Sąsajoje po tokio bandymo rodomas suprantamas klaidos pranešimas ir atnaujinamas sąrašas. Atnaujintame viešame sąraše veiklos nėra; nauja rezervacija nesukuriama ir skaitiklis nesikeičia. | — | — |
+| 8 | B rezervuoja A veiklą. Užrašyti abiejų įrašų ID. A atšaukia veiklą; B atnaujina `/my-reservations`. Palyginti DB įrašus prieš ir po. | Kortelė išlieka ir rodo „Veikla atšaukta“ bei „Organizatorius atšaukė veiklą. Jūsų rezervacijos įrašas išsaugotas.“ Nėra rezervavimo / rezervacijos atšaukimo mygtukų ir „Liko vietų“. Veiklos ir rezervacijos ID išlieka; veiklos būsena `cancelled`, rezervacijos būsena lieka `active`, `reserved_slots` nesikeičia. | — | — |
+| 9 | Turint vieną aktyvios ir vieną organizatoriaus atšauktos veiklos rezervaciją, perkrauti `/my-reservations`. Kitoje naršyklėje prisijungti ta pačia B paskyra ir atidaryti tą patį puslapį. | Abiejose naršyklėse gaunamos tos pačios rezervacijos ir aktualios veiklų būsenos. Atšaukimo žyma išlieka; duomenys nepriklauso nuo ankstesnio lango atminties. | — | — |
+| 10 | Atskiroje A veikloje pirmiausia anonimiškai ir B sesija bandyti `cancel_activity`; patikrinti, kad veikla tebėra aktyvi. Tada A puslapyje `/my-activities` paspaudžia „Atšaukti veiklą“ ir patvirtina. | Anoniminė ir B užklausos atmetamos. Tik A veiksmas pakeičia būseną į `cancelled`. Veikla ir esamos rezervacijos neištrinamos. | — | — |
+
+Pasenusio puslapio bandymo pastaba: komponentas atnaujina duomenis gavęs lango fokusą. Jei grįžus į langą kortelė jau išnyko, tai patvirtina atnaujinimą, bet dar nepatikrina pasenusios užklausos. Tokiu atveju su B sesija pakartokite rezervavimo RPC atšauktos veiklos ID ir užrašykite šį žingsnį faktiniame rezultate.
+
+## Techninė išvada: teisių tikrinimas
+
+**Pagal perskaitytą kodą pagrindinės teisės tikrinamos Next.js serverio ir (arba) Supabase duomenų bazės pusėje, ne vien mygtukų rodymu.** Tai statinė kodo peržiūra, o ne įrodymas, kad bandymai jau pavyko ar migracijos tikrai pritaikytos naudojamoje aplinkoje.
+
+| Sritis | Kur ir kaip tikrinama |
+| --- | --- |
+| Prisijungimas organizatoriaus veiksmams | [`lib/organizer/session.js`](lib/organizer/session.js) serveryje kviečia `auth.getUser()` ir neprisijungus nukreipia į `/login`. Šią patikrą naudoja [`lib/organizer/actions.js`](lib/organizer/actions.js) veiksmai. |
+| Svetimos veiklos redagavimas | [`app/activities/[id]/edit/page.js`](app/activities/[id]/edit/page.js) ir `saveActivity` užklausose filtruoja pagal prisijungusio vartotojo `creator_id`. [`001_initial_schema.sql`](supabase/migrations/001_initial_schema.sql) papildomai nustato `activities_update_own` RLS taisyklę su `auth.uid()`. Klientui suteikta teisė keisti tik `title` ir `description`; `status`, `creator_id`, `capacity` ir skaitiklio keitimas nesuteiktas. |
+| Rezervavimas ir dvigubo rezervavimo apsauga | `001_initial_schema.sql` funkcija `reserve_activity` tikrina `auth.uid()`, užrakina veiklos eilutę (`FOR UPDATE`), tikrina aktyvumą, pradžios laiką, vietas ir jau turimą aktyvią rezervaciją. Dalinis unikalus indeksas `reservations_one_active_per_user_idx` papildomai neleidžia tam pačiam vartotojui turėti dviejų aktyvių tos pačios veiklos rezervacijų. Įrašas ir `reserved_slots` keičiami vienoje transakcijoje. |
+| Savo rezervacijos atšaukimas | `001_initial_schema.sql` funkcija `cancel_reservation` tikrina prisijungimą, rezervacijos `user_id = auth.uid()`, aktyvią rezervacijos būseną ir veiklos pradžią. Atšaukimas pakeičia rezervacijos būseną ir sumažina skaitiklį, o ne ištrina įrašą. |
+| Tik kūrėjo vykdomas veiklos atšaukimas | [`002_cancel_activity.sql`](supabase/migrations/002_cancel_activity.sql) funkcija `cancel_activity` tikrina prisijungimą ir atrenka bei užrakina tik eilutę, kurios `creator_id = auth.uid()`. Keičiamas tik veiklos `status`; rezervacijos neliečiamos. `cancelActivity` serverio veiksmas šią funkciją kviečia vartotojo sesija. |
+| Tiesioginis API naudojimas | Visų trijų RPC vykdymo teisės atimtos iš `public` ir `anon`, suteiktos `authenticated`. Rezervacijų lentelėje klientui suteiktas tik skaitymas, o tiesioginį įterpimą, keitimą ir trynimą papildomai draudžia RLS. RPC yra `SECURITY DEFINER`, todėl jose esantys aiškūs `auth.uid()` ir savininko tikrinimai būtini; vien lentelių RLS joms pasikliauti negalima. |
+| Duomenų skaitymas ir išlikimas | RLS leidžia skaityti savo rezervacijas arba savo sukurtos veiklos rezervacijas; veiklos skaitomos ir atšauktos būsenos. [`components/ParticipantActivities.js`](components/ParticipantActivities.js) „Mano rezervacijos“ užklausoje filtruoja rezervacijos `status = 'active'`, bet ne susietos veiklos aktyvumą. Todėl organizatoriaus atšaukta veikla lieka rezervacijos kortelėje. Duomenys gaunami iš Supabase atidarius puslapį, gavus fokusą ir po veiksmo; nuolatinio atnaujinimo realiu laiku nėra. |
+
+### Nustatyta serverio apsaugos riba
+
+`reserve_activity` atmeta atšauktą veiklą ir gavusi užklausą iš pasenusio puslapio. Tačiau `cancel_reservation` **netikrina, ar pati veikla atšaukta**: savo aktyvią rezervaciją iki veiklos pradžios vartotojas vis dar gali atšaukti tiesiogine RPC užklausa arba iš pasenusios sąsajos. Dabartinė sąsaja slepia mygtuką ir stabdo veiksmą tik tada, kai jau žino `activity.status = 'cancelled'`.
+
+Toks tiesioginis savo rezervacijos atšaukimas įrašo neištrina, bet pakeičia jo būseną į `cancelled`, sumažina `reserved_slots` ir rezervacija neberodoma dabartiniame „Mano rezervacijos“ sąraše. Tai nėra galimybė atšaukti svetimą rezervaciją, tačiau jei siekiama visiškai uždrausti rezervacijos atšaukimą organizatoriui atšaukus veiklą, dabartinės DB patikros tam nepakanka. Šiame dokumentavimo darbe kodas ir migracijos nekeičiami.
